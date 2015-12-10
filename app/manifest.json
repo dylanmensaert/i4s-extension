@@ -9,6 +9,7 @@
         "default_popup": "popup.html"
     },
     "permissions": [
-        "http://192.168.182.1:3990/logon"
+        "http://192.168.182.1:3990/",
+        "http://go.i4s.be/"
     ]
 }
