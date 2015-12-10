@@ -2,14 +2,11 @@ const key = 'i4s-credentials';
 
 function sendCredentials(credentials) {
     var loginBtn = document.getElementById('my-login'),
-        errorPanel;
+        errorPanel = document.getElementById('my-error');
 
     loginBtn.style.opacity = 0.65;
     loginBtn.style.pointerEvents = 'none';
-
     loginBtn.innerHTML = 'Signing in..';
-
-    errorPanel = document.getElementById('my-error');
 
     errorPanel.style.display = 'none';
 
