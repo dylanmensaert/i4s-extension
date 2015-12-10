@@ -10,6 +10,5 @@
     },
     "permissions": [
         "http://192.168.182.1:3990/logon"
-    ],
-    "web_accessible_resources": ["banner.png", "popup.js"]
+    ]
 }
