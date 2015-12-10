@@ -13,16 +13,17 @@ function disableElement(element, text) {
 }
 
 function showSignedIn() {
-    var usernameOutput = document.getElementById('my-username-output'),
+    var infoLink = document.getElementById('my-info-link'),
         credentials;
 
     if (localStorage.getItem(key)) {
         credentials = JSON.parse(localStorage.getItem(key));
 
-        usernameOutput.value = credentials.username;
-        usernameOutput.style.display = 'block';
+        infoLink.innerHTML = credentials.username;
+        infoLink.href = 'http://helpdesk.i4s.be/welcome.php?account=' + credentials.username + '&mac=' + credentials.mac;
+        infoLink.style.display = 'inline';
     } else {
-        usernameOutput.style.display = 'none';
+        infoLink.style.display = 'none';
     }
 
     enableElement(document.getElementById('my-sign-out-btn'), 'Sign out');
@@ -85,7 +86,17 @@ function sendCredentials(credentials) {
         var challengeMatch = response.match('<input type="hidden" name="chal" value="(.*)">');
 
         if (challengeMatch) {
-            sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username + '&pwd=' + credentials.password + '&save_login=on&login=Login', showSignedIn);
+            sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username + '&pwd=' + credentials.password + '&save_login=on&login=Login', function(response) {
+                var macMatch = response.match('&mac=(.*)');
+
+                if (macMatch) {
+                    credentials.mac = macMatch[1].substring(0, 17);
+                }
+
+                localStorage.setItem(key, JSON.stringify(credentials));
+
+                showSignedIn();
+            });
         }
     });
 }
@@ -109,8 +120,6 @@ function sendCredentials(credentials) {
         credentials.password = document.getElementById('my-password-input').value;
 
         if (credentials.username && credentials.password) {
-            localStorage.setItem(key, JSON.stringify(credentials));
-
             sendCredentials(credentials);
         }
     });

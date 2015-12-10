@@ -1600,8 +1600,8 @@
         text-align: center;
     }
     
-    #my-username-output[disabled] {
-        cursor: initial;
+    .my-text-center {
+        text-align: center;
     }
     </style>
 </head>
@@ -1619,15 +1619,19 @@
             </div>
         </div>
         <div id="my-signed-in" style="display: none;">
-            <input id="my-username-output" class="form-control" disabled>
+            <div class="btn-lg my-text-center">
+                Username:
+                <a id="my-info-link" target="_blank">
+                </a>
+            </div>
             <div id="my-sign-out-btn" class="btn btn-lg btn-default btn-block my-btn">
                 Sign out
             </div>
         </div>
         <div class="my-footer">
             <small>
-                    Extension by Dylan Mensaert
-                </small>
+                Extension by Dylan Mensaert
+            </small>
         </div>
     </div>
     <script src="popup.js"></script>
