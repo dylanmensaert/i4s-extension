@@ -2,22 +2,26 @@ const key = 'i4s-credentials';
 
 function sendCredentials(credentials) {
     var loginBtn = document.getElementById('my-login'),
-        errorPanel = document.getElementById('my-error'),
-        xmlHttpRequest = new XMLHttpRequest();
+        errorPanel;
 
     loginBtn.style.opacity = 0.65;
     loginBtn.style.pointerEvents = 'none';
+
     loginBtn.innerHTML = 'Signing in..';
+
+    errorPanel = document.getElementById('my-error');
 
     errorPanel.style.display = 'none';
 
-    xmlHttpRequest.onreadystatechange = function () {
+    var xhttp = new XMLHttpRequest();
+
+    xhttp.onreadystatechange = function () {
         loginBtn.style.opacity = 1;
         loginBtn.style.pointerEvents = 'auto';
 
         loginBtn.innerHTML = 'Sign in';
 
-        if (xmlHttpRequest.readyState === 4 && xmlHttpRequest.status === 200) {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
             document.getElementById('my-sign-in').style.display = 'none';
             document.getElementById('my-signed-in').style.display = 'block';
             document.getElementById('my-username-output').value = credentials.username;
@@ -26,8 +30,8 @@ function sendCredentials(credentials) {
         }
     }
 
-    xmlHttpRequest.open('GET', 'http://192.168.182.1:3990/logon?username=' + credentials.username + '&password=' + credentials.password, true);
-    xmlHttpRequest.send();
+    xhttp.open('GET', 'http://192.168.182.1:3990/logon?username=' + credentials.username + '&password=' + credentials.password, true);
+    xhttp.send();
 }
 
 (function () {
@@ -61,6 +65,13 @@ function sendCredentials(credentials) {
 
         document.getElementById('my-username').value = null;
         document.getElementById('my-password').value = null;
+
+        var loginBtn = document.getElementById('my-login');
+
+        loginBtn.style.opacity = 1;
+        loginBtn.style.pointerEvents = 'auto';
+
+        loginBtn.innerHTML = 'Sign in';
 
         // TODO: logout functionality
     });
