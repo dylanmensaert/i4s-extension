@@ -14,6 +14,7 @@ function disableElement(element, text) {
 
 function showSignedIn() {
     var infoLink = document.getElementById('my-info-link'),
+        info = document.getElementById('my-info'),
         credentials;
 
     if (localStorage.getItem(key)) {
@@ -21,9 +22,9 @@ function showSignedIn() {
 
         infoLink.innerHTML = credentials.username;
         infoLink.href = 'http://helpdesk.i4s.be/welcome.php?account=' + credentials.username + '&mac=' + credentials.mac;
-        infoLink.style.display = 'inline';
+        info.style.display = 'block';
     } else {
-        infoLink.style.display = 'none';
+        info.style.display = 'none';
     }
 
     enableElement(document.getElementById('my-sign-out-btn'), 'Sign out');
@@ -51,7 +52,7 @@ function sendRequest(url, callback) {
 
     document.getElementById('my-error').style.display = 'none';
 
-    xmlHttpRequest.onreadystatechange = function () {
+    xmlHttpRequest.onreadystatechange = function() {
         var messageMatchMatch,
             errorMessage;
 
@@ -82,13 +83,13 @@ function sendRequest(url, callback) {
 function sendCredentials(credentials) {
     disableElement(document.getElementById('my-sign-in-btn'), 'Signing in..');
 
-    sendRequest('http://192.168.182.1:3990/prelogin', function (response) {
+    sendRequest('http://192.168.182.1:3990/prelogin', function(response) {
         var challengeMatch = response.match('<input type="hidden" name="chal" value="(.*)">');
 
         if (challengeMatch) {
             sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username +
                 '&pwd=' + credentials.password + '&save_login=on&login=Login',
-                function (response) {
+                function(response) {
                     var macMatch = response.match('&mac=(.*)');
 
                     if (macMatch) {
@@ -104,7 +105,7 @@ function sendCredentials(credentials) {
     });
 }
 
-(function () {
+(function() {
     if (localStorage.getItem(key)) {
         var credentials = JSON.parse(localStorage.getItem(key));
 
@@ -116,13 +117,13 @@ function sendCredentials(credentials) {
         sendRequest('http://192.168.182.1:3990/prelogin');
     }
 
-    chrome.extension.isAllowedIncognitoAccess(function (isAllowedAccess) {
+    chrome.extension.isAllowedIncognitoAccess(function(isAllowedAccess) {
         if (!isAllowedAccess) {
             document.getElementById('my-incognito').style.display = 'inline';
         }
     });
 
-    document.getElementById('my-sign-in-btn').addEventListener('click', function () {
+    document.getElementById('my-sign-in-btn').addEventListener('click', function() {
         var credentials = {};
 
         credentials.username = document.getElementById('my-username-input').value;
@@ -133,13 +134,13 @@ function sendCredentials(credentials) {
         }
     });
 
-    document.getElementById('my-sign-out-btn').addEventListener('click', function () {
+    document.getElementById('my-sign-out-btn').addEventListener('click', function() {
         disableElement(document.getElementById('my-sign-out-btn'), 'Signing out..');
 
         sendRequest('http://192.168.182.1:3990/logoff', showSignIn);
     });
 
-    document.getElementById('my-incognito').addEventListener('click', function () {
+    document.getElementById('my-incognito').addEventListener('click', function() {
         chrome.tabs.create({
             url: 'chrome://extensions/?id=' + chrome.runtime.id
         });
