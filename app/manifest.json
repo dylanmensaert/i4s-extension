@@ -2,6 +2,7 @@
     "manifest_version": 2,
 
     "name": "i4s",
+    "short_name": "Internet for students",
     "description": "This extension automatically logs you into i4s",
     "version": "1.4",
     "browser_action": {
