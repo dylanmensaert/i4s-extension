@@ -3,10 +3,15 @@
 
     "name": "i4s",
     "description": "This extension automatically logs you into i4s",
-    "version": "1.0",
+    "version": "1.2",
     "browser_action": {
         "default_icon": "assets/icon.png",
         "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "assets/icon.png",
+        "48": "assets/icon.png",
+        "128": "assets/icon.png"
     },
     "permissions": [
         "http://192.168.182.1:3990/",
