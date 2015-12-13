@@ -1,5 +1,7 @@
 const key = 'i4s-credentials';
 
+var lastRequestStamp;
+
 function enableElement(element, text) {
     element.style.opacity = 1;
     element.style.pointerEvents = 'auto';
@@ -10,6 +12,10 @@ function disableElement(element, text) {
     element.style.opacity = 0.65;
     element.style.pointerEvents = 'none';
     element.innerHTML = text;
+}
+
+function enableSignIn() {
+    enableElement(document.getElementById('my-sign-in-btn'), 'Sign in');
 }
 
 function showSignedIn() {
@@ -41,38 +47,42 @@ function showSignIn() {
         document.getElementById('my-password-input').value = credentials.password;
     }
 
-    enableElement(document.getElementById('my-sign-in-btn'), 'Sign in');
+    enableSignIn();
 
     document.getElementById('my-signed-in').style.display = 'none';
     document.getElementById('my-sign-in').style.display = 'block';
 }
 
-function sendRequest(url, callback) {
+function showMessage(message) {
+    document.getElementById('my-error').innerHTML = message;
+    document.getElementById('my-error').style.display = 'block';
+}
+
+function extractMessage(responseText) {
+    var messageMatch = responseText.match('<p class="msg">(.*)</p><p'),
+        message;
+
+    if (messageMatch) {
+        message = messageMatch[1];
+    }
+
+    return message;
+}
+
+function sendRequest(url, callback, requestStamp) {
     var xmlHttpRequest = new XMLHttpRequest();
+
+    if (!requestStamp) {
+        requestStamp = new Date().getTime();
+
+        lastRequestStamp = requestStamp;
+    }
 
     document.getElementById('my-error').style.display = 'none';
 
     xmlHttpRequest.onreadystatechange = function() {
-        var messageMatchMatch,
-            errorMessage;
-
-        if (xmlHttpRequest.responseText) {
-            messageMatchMatch = xmlHttpRequest.responseText.match('<p class="msg">(.*)</p><p');
-
-            if (messageMatchMatch && messageMatchMatch[1] !== 'Welcome') {
-                errorMessage = messageMatchMatch[1];
-
-                if (errorMessage === 'Already logged in to i4s.') {
-                    showSignedIn();
-                } else if (errorMessage === 'You are now logged off.') {
-                    showSignIn();
-                } else {
-                    document.getElementById('my-error').innerHTML = errorMessage;
-                    document.getElementById('my-error').style.display = 'block';
-                }
-            } else if (callback) {
-                callback(xmlHttpRequest.responseText);
-            }
+        if (requestStamp === lastRequestStamp) {
+            callback(xmlHttpRequest.responseText);
         }
     };
 
@@ -80,29 +90,56 @@ function sendRequest(url, callback) {
     xmlHttpRequest.send();
 }
 
-function sendCredentials(credentials) {
-    disableElement(document.getElementById('my-sign-in-btn'), 'Signing in..');
+function signIn(credentials) {
+    var signInBtn = document.getElementById('my-sign-in-btn'),
+        requestStamp = new Date().getTime();
+
+    lastRequestStamp = requestStamp;
+
+    disableElement(signInBtn, 'Signing in..');
 
     sendRequest('http://192.168.182.1:3990/prelogin', function(response) {
-        var challengeMatch = response.match('<input type="hidden" name="chal" value="(.*)">');
+        var message = extractMessage(response),
+            challengeMatch;
 
-        if (challengeMatch) {
-            sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username +
-                '&pwd=' + credentials.password + '&save_login=on&login=Login',
-                function(response) {
-                    var macMatch = response.match('&mac=(.*)');
+        if (message === 'Already logged in to i4s.') {
+            showSignedIn();
+        } else {
+            challengeMatch = response.match('<input type="hidden" name="chal" value="(.*)">');
 
-                    if (macMatch) {
-                        credentials.mac = macMatch[1].substring(0, 17);
-                    }
+            if (challengeMatch) {
+                sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username +
+                    '&pwd=' + credentials.password + '&save_login=on&login=Login',
+                    function(response) {
+                        var message = extractMessage(response),
+                            match;
 
-                    localStorage.setItem(key, JSON.stringify(credentials));
+                        if (message) {
+                            if (message === 'Welcome') {
+                                match = response.match('&mac=(.*)');
 
-                    showSignedIn();
-                }
-            );
+                                if (match) {
+                                    credentials.mac = match[1].substring(0, 17);
+                                }
+
+                                localStorage.setItem(key, JSON.stringify(credentials));
+
+                                showSignedIn();
+                            }
+                        } else {
+                            match = response.match('<font color="red">(.*)</font></p>');
+
+                            if (match && match[1] === 'Sorry, login failed. Please try again.') {
+                                showMessage('Oops, failed to sign in. Please try again.');
+
+                                enableElement(signInBtn, 'Sign in');
+                            }
+                        }
+                    }, requestStamp
+                );
+            }
         }
-    });
+    }, requestStamp);
 }
 
 (function() {
@@ -112,7 +149,7 @@ function sendCredentials(credentials) {
         document.getElementById('my-username-input').value = credentials.username;
         document.getElementById('my-password-input').value = credentials.password;
 
-        sendCredentials(credentials);
+        signIn(credentials);
     } else {
         sendRequest('http://192.168.182.1:3990/prelogin');
     }
@@ -130,19 +167,37 @@ function sendCredentials(credentials) {
         credentials.password = document.getElementById('my-password-input').value;
 
         if (credentials.username && credentials.password) {
-            sendCredentials(credentials);
+            signIn(credentials);
         }
     });
 
     document.getElementById('my-sign-out-btn').addEventListener('click', function() {
         disableElement(document.getElementById('my-sign-out-btn'), 'Signing out..');
 
-        sendRequest('http://192.168.182.1:3990/logoff', showSignIn);
+        sendRequest('http://192.168.182.1:3990/logoff', function(response) {
+            var message = extractMessage(response);
+
+            if (message === 'You are now logged off.') {
+                showSignIn();
+            }
+        });
     });
 
     document.getElementById('my-incognito').addEventListener('click', function() {
         chrome.tabs.create({
             url: 'chrome://extensions/?id=' + chrome.runtime.id
         });
+    });
+
+    document.getElementById('my-username-input').addEventListener('input', function() {
+        lastRequestStamp = null;
+
+        enableSignIn();
+    });
+
+    document.getElementById('my-password-input').addEventListener('input', function() {
+        lastRequestStamp = null;
+
+        enableSignIn();
     });
 })();
