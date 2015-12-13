@@ -90,13 +90,25 @@ function sendRequest(url, callback, requestStamp) {
     xmlHttpRequest.send();
 }
 
+function showSignInFail() {
+    showMessage('Oops, failed to sign in. Please try again.');
+
+    enableElement(document.getElementById('my-sign-in-btn'), 'Sign in');
+}
+
 function signIn(credentials) {
-    var signInBtn = document.getElementById('my-sign-in-btn'),
-        requestStamp = new Date().getTime();
+    var requestStamp = new Date().getTime(),
+        cancelSignIn;
 
     lastRequestStamp = requestStamp;
 
-    disableElement(signInBtn, 'Signing in..');
+    cancelSignIn = setTimeout(function() {
+        lastRequestStamp = null;
+
+        showSignInFail();
+    }, 3000);
+
+    disableElement(document.getElementById('my-sign-in-btn'), 'Signing in..');
 
     sendRequest('http://192.168.182.1:3990/prelogin', function(response) {
         var message = extractMessage(response),
@@ -116,6 +128,8 @@ function signIn(credentials) {
 
                         if (message) {
                             if (message === 'Welcome') {
+                                clearTimeout(cancelSignIn);
+
                                 match = response.match('&mac=(.*)');
 
                                 if (match) {
@@ -130,9 +144,9 @@ function signIn(credentials) {
                             match = response.match('<font color="red">(.*)</font></p>');
 
                             if (match && match[1] === 'Sorry, login failed. Please try again.') {
-                                showMessage('Oops, failed to sign in. Please try again.');
+                                clearTimeout(cancelSignIn);
 
-                                enableElement(signInBtn, 'Sign in');
+                                showSignInFail();
                             }
                         }
                     }, requestStamp
