@@ -81,7 +81,7 @@ function sendRequest(url, callback, requestStamp) {
     document.getElementById('my-error').style.display = 'none';
 
     xmlHttpRequest.onreadystatechange = function() {
-        if (requestStamp === lastRequestStamp) {
+        if (callback && requestStamp === lastRequestStamp) {
             callback(xmlHttpRequest.responseText);
         }
     };
