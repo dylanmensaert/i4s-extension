@@ -4,7 +4,7 @@
     "name": "i4s",
     "short_name": "Internet for students",
     "description": "This extension automatically logs you into i4s",
-    "version": "1.6",
+    "version": "1.7",
     "browser_action": {
         "default_icon": "assets/icon.png",
         "default_popup": "popup.html"
