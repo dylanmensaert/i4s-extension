@@ -80,7 +80,7 @@ function sendRequest(url, callback, requestStamp) {
 
     document.getElementById('my-error').style.display = 'none';
 
-    xmlHttpRequest.onreadystatechange = function() {
+    xmlHttpRequest.onreadystatechange = function () {
         if (callback && requestStamp === lastRequestStamp) {
             callback(xmlHttpRequest.responseText);
         }
@@ -102,7 +102,7 @@ function signIn(credentials) {
 
     lastRequestStamp = requestStamp;
 
-    cancelSignIn = setTimeout(function() {
+    cancelSignIn = setTimeout(function () {
         lastRequestStamp = null;
 
         showSignInFail();
@@ -110,7 +110,15 @@ function signIn(credentials) {
 
     disableElement(document.getElementById('my-sign-in-btn'), 'Signing in..');
 
-    sendRequest('http://192.168.182.1:3990/prelogin', function(response) {
+    sendRequest('http://192.168.10.1:8002', function () {
+        clearTimeout(cancelSignIn);
+
+        localStorage.setItem(key, JSON.stringify(credentials));
+
+        showSignedIn();
+    }, requestStamp);
+
+    sendRequest('http://192.168.182.1:3990/prelogin', function (response) {
         var message = extractMessage(response),
             challengeMatch;
 
@@ -122,7 +130,7 @@ function signIn(credentials) {
             if (challengeMatch) {
                 sendRequest('http://go.i4s.be/?chal=' + challengeMatch[1] + '&uamip=192.168.182.1&uamport=3990&userurl=&uid=' + credentials.username +
                     '&pwd=' + credentials.password + '&save_login=on&login=Login',
-                    function(response) {
+                    function (response) {
                         var message = extractMessage(response),
                             match;
 
@@ -156,7 +164,7 @@ function signIn(credentials) {
     }, requestStamp);
 }
 
-(function() {
+(function () {
     if (localStorage.getItem(key)) {
         var credentials = JSON.parse(localStorage.getItem(key));
 
@@ -168,13 +176,13 @@ function signIn(credentials) {
         sendRequest('http://192.168.182.1:3990/prelogin');
     }
 
-    chrome.extension.isAllowedIncognitoAccess(function(isAllowedAccess) {
+    chrome.extension.isAllowedIncognitoAccess(function (isAllowedAccess) {
         if (!isAllowedAccess) {
             document.getElementById('my-incognito').style.display = 'inline';
         }
     });
 
-    document.getElementById('my-sign-in-btn').addEventListener('click', function() {
+    document.getElementById('my-sign-in-btn').addEventListener('click', function () {
         var credentials = {};
 
         credentials.username = document.getElementById('my-username-input').value;
@@ -185,10 +193,12 @@ function signIn(credentials) {
         }
     });
 
-    document.getElementById('my-sign-out-btn').addEventListener('click', function() {
+    document.getElementById('my-sign-out-btn').addEventListener('click', function () {
         disableElement(document.getElementById('my-sign-out-btn'), 'Signing out..');
 
-        sendRequest('http://192.168.182.1:3990/logoff', function(response) {
+        sendRequest('http://192.168.10.1:8002', showSignIn);
+
+        sendRequest('http://192.168.182.1:3990/logoff', function (response) {
             var message = extractMessage(response);
 
             if (message === 'You are now logged off.') {
@@ -197,19 +207,19 @@ function signIn(credentials) {
         });
     });
 
-    document.getElementById('my-incognito').addEventListener('click', function() {
+    document.getElementById('my-incognito').addEventListener('click', function () {
         chrome.tabs.create({
             url: 'chrome://extensions/?id=' + chrome.runtime.id
         });
     });
 
-    document.getElementById('my-username-input').addEventListener('input', function() {
+    document.getElementById('my-username-input').addEventListener('input', function () {
         lastRequestStamp = null;
 
         enableSignIn();
     });
 
-    document.getElementById('my-password-input').addEventListener('input', function() {
+    document.getElementById('my-password-input').addEventListener('input', function () {
         lastRequestStamp = null;
 
         enableSignIn();
