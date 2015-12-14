@@ -98,6 +98,8 @@ function showSignInFail() {
 
 function signIn(credentials) {
     var requestStamp = new Date().getTime(),
+        xmlHttpRequest = new XMLHttpRequest(),
+        formData = new FormData(),
         cancelSignIn;
 
     lastRequestStamp = requestStamp;
@@ -110,13 +112,21 @@ function signIn(credentials) {
 
     disableElement(document.getElementById('my-sign-in-btn'), 'Signing in..');
 
-    sendRequest('http://192.168.10.1:8002', function () {
-        clearTimeout(cancelSignIn);
+    xmlHttpRequest.onreadystatechange = function () {
+        if (requestStamp === lastRequestStamp) {
+            clearTimeout(cancelSignIn);
 
-        localStorage.setItem(key, JSON.stringify(credentials));
+            localStorage.setItem(key, JSON.stringify(credentials));
 
-        showSignedIn();
-    }, requestStamp);
+            showSignedIn();
+        }
+    };
+
+    formData.append('auth_user', credentials.username);
+    formData.append('auth_pass', credentials.password);
+
+    xmlHttpRequest.open('POST', 'http://192.168.10.1:8002', true);
+    xmlHttpRequest.send(formData);
 
     sendRequest('http://192.168.182.1:3990/prelogin', function (response) {
         var message = extractMessage(response),
