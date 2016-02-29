@@ -96,7 +96,7 @@ function showSignInFail() {
     enableElement(document.getElementById('my-sign-in-btn'), 'Sign in');
 }
 
-function signIn(credentials) {
+function signIn(credentials, retry) {
     var requestStamp = new Date().getTime(),
         xmlHttpRequest = new XMLHttpRequest(),
         formData = new FormData(),
@@ -162,9 +162,13 @@ function signIn(credentials) {
                             match = response.match('<font color="red">(.*)</font></p>');
 
                             if (match && match[1] === 'Sorry, login failed. Please try again.') {
-                                clearTimeout(cancelSignIn);
+                                if (retry) {
+                                    signIn(credentials, false);
+                                } else {
+                                    clearTimeout(cancelSignIn);
 
-                                showSignInFail();
+                                    showSignInFail();
+                                }
                             }
                         }
                     }, requestStamp
@@ -181,7 +185,7 @@ function signIn(credentials) {
         document.getElementById('my-username-input').value = credentials.username;
         document.getElementById('my-password-input').value = credentials.password;
 
-        signIn(credentials);
+        signIn(credentials, true);
     } else {
         sendRequest('http://192.168.182.1:3990/prelogin');
     }
@@ -199,7 +203,7 @@ function signIn(credentials) {
         credentials.password = document.getElementById('my-password-input').value;
 
         if (credentials.username && credentials.password) {
-            signIn(credentials);
+            signIn(credentials, true);
         }
     });
 
